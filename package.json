@@ -1,17 +1,52 @@
 {
   "name": "api-pagination-tester",
-  "version": "0.0.0",
-  "description": "Exercise pagination links, cursors, limits and duplicate boundary behavior.",
+  "version": "0.1.0",
+  "description": "Walk a cursor-paginated API modelled as an in-memory mock and prove what a client would hold: boundary duplicates, missing records, repeated cursors that must terminate, and empty pages told apart from last pages.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test"
+    "lint": "node --check src/index.mjs && node --check src/analyze.mjs && node --check src/rules.mjs && node --check src/scenario.mjs && node --check src/text.mjs && node --check src/walk.mjs && node --check bin/api-pagination-tester.mjs && node --check test/analyze.test.mjs && node --check test/cli.test.mjs && node --check test/determinism.test.mjs && node --check test/incomplete.test.mjs && node --check test/limits.test.mjs && node --check test/read-only.test.mjs && node --check test/sanitize.test.mjs && node --check test/scenario.test.mjs && node --check test/severity-behaviour.test.mjs && node --check test/severity-table.test.mjs && node --check test/text.test.mjs && node --check test/walk.test.mjs",
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**",
+    "example": "node bin/api-pagination-tester.mjs --input examples/orders-clean.json",
+    "pack:check": "npm pack --dry-run",
+    "check": "npm run lint && npm test && npm run example && npm run pack:check"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/edilec/api-pagination-tester"
-  }
+    "url": "git+https://github.com/edilec/api-pagination-tester.git"
+  },
+  "bin": {
+    "api-pagination-tester": "./bin/api-pagination-tester.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "pagination",
+    "cursor",
+    "api-testing",
+    "mock-api",
+    "state-machine",
+    "duplicates",
+    "completeness",
+    "cli"
+  ],
+  "author": "Edilec Private Limited",
+  "bugs": {
+    "url": "https://github.com/edilec/api-pagination-tester/issues"
+  },
+  "homepage": "https://github.com/edilec/api-pagination-tester#readme"
 }
