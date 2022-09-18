@@ -1,0 +1,49 @@
+# Changelog
+
+All notable changes to this project are recorded here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Rule ids are part of the public interface. Renaming one, or changing the severity of one, is a
+breaking change and is recorded here.
+
+## [Unreleased]
+
+### Added
+
+- The pagination walker (`src/walk.mjs`): follows cursors from the initial request, remembers every
+  cursor it has requested, and always terminates. Empty pages, last pages and the empty-string
+  terminator are three separate states, not one.
+- The in-memory mock API (`src/scenario.mjs`): a `Map` lookup in this process. No socket is opened
+  and no port is bound, and `src/` imports no network module.
+- Strict scenario validation: unknown keys refused rather than ignored, `nextCursor` required
+  explicitly, exactly one initial page, no duplicate cursors, and a non-empty corpus of unique
+  identities.
+- The record-identity verdict: boundary duplicates, repeats inside one page, records the corpus does
+  not declare, and — only for a walk that reached a real last page — records that are missing.
+- `completeness-unknown`: a walk that ended on a cycle, a dangling cursor or a bound proves nothing
+  about completeness, so it says so and the run is incomplete rather than declaring unreached records
+  missing.
+- The rule catalog: 27 rules, each with its severity taken from one frozen table
+  (`RULE_SEVERITY` in `src/rules.mjs`), asserted against `docs/pagination-rules.md` in both
+  directions and pinned behaviourally by exit codes and literal inline counts.
+- Eight explicit limits — scenario bytes, declared pages, corpus size, pages walked, records walked,
+  identity length, findings and milliseconds — each enforced, each named in a finding when exceeded,
+  and each tested from both sides of its bound. Exceeding one is an `incomplete` report, never a
+  silent truncation.
+- CLI `api-pagination-tester` with `--help`, `--json`, `--input`, `--root`, `--out`, `--overwrite`
+  and a flag for every limit. Repeated value-carrying flags and unknown options are configuration
+  errors, and a configuration error leaves stdout empty.
+- `--out` refuses to be the scenario file, comparing `dev` and `ino` rather than resolved paths so
+  that a hard link — which has no target for `realpath` to resolve — cannot launder the input into
+  the output, and refuses to replace an existing file without `--overwrite`.
+- Path confinement on real paths: both the root and the input are resolved before they are compared,
+  so a symlink out of the root is refused and a root that is itself a symlink is not.
+- Strict UTF-8 decoding of every scenario, through one function shared by every entry point.
+- Output sanitising of C0, DEL, C1, U+2028/U+2029 and the bidi controls from every untrusted string,
+  identifiers included. Sanitising is an output step; identity always uses the raw value.
+- Determinism: ordering by UTF-16 code unit at every site, an injected clock, and byte-identical
+  stdout over identical input.
+- Three example scenarios, one for each exit code, and `docs/pagination-rules.md`.
+
+No release has been published.

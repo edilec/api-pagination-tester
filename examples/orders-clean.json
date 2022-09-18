@@ -1,0 +1,11 @@
+{
+  "name": "orders",
+  "style": "cursor",
+  "pageLimit": 2,
+  "corpus": ["ord-1", "ord-2", "ord-3", "ord-4", "ord-5"],
+  "pages": [
+    { "cursor": null, "records": ["ord-1", "ord-2"], "nextCursor": "after:ord-2" },
+    { "cursor": "after:ord-2", "records": ["ord-3", "ord-4"], "nextCursor": "after:ord-4" },
+    { "cursor": "after:ord-4", "records": ["ord-5"], "nextCursor": null }
+  ]
+}
