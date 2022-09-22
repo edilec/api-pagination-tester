@@ -216,6 +216,12 @@ run early, which is a finding of its own.
 (`terminatedBy`), whether completeness was proven (`complete`), one entry per page in walk order, the
 four record-identity lists, and the declared cursors nothing led to.
 
+`maxFindings` bounds the `findings` array and nothing else. The identity lists under `walk.records`
+and `walk.unreachablePages` are complete, and are bounded instead by `maxCorpus` and `maxRecords`,
+which are enforced before the walk starts. So a run whose findings were capped still reports every
+duplicated, repeated, missing and unknown identity it observed — the two are deliberately asymmetric,
+and `too-many-findings` says which of the two stopped early.
+
 A finding carries `ruleId`, `severity`, `message`, `location.file`, `location.pointer`, and
 optionally `evidence`, `suggestion` and `page`. `location.file` is relative to `--root` (by default
 the scenario's own directory), so an absolute host path never reaches the report.
