@@ -261,3 +261,44 @@ test('an empty-string terminator a page does answer stops the walk and blocks th
   assert.deepEqual(report.walk.records.missing, [])
   assert.match(find(report, 'terminator-ambiguous').message, /disagree about real records/)
 })
+
+/* --- what an unfinished walk is allowed to claim --------------------------- */
+
+test('completeness-unknown counts corpus records, not the identities the walk served', async () => {
+  // Both of these walks stopped on a dangling cursor having served nothing the
+  // corpus declares. A count taken from the served identities answers a
+  // different question: it reports one record unobserved when both are, and it
+  // goes negative as soon as more unknown ids are served than the corpus holds.
+  const undercount = await testScenarioObject({
+    corpus: ['a', 'b'],
+    pages: [{ cursor: null, records: ['x'], nextCursor: 'gone' }],
+  })
+
+  assert.equal(undercount.status, 'incomplete')
+  assert.equal(undercount.summary.observedCorpus, 0, 'no declared identity was observed')
+  assert.match(find(undercount, 'completeness-unknown').message, /so 2 corpus record\(s\) were never observed/)
+
+  const negative = await testScenarioObject({
+    corpus: ['a'],
+    pages: [{ cursor: null, records: ['x', 'y', 'z'], nextCursor: 'gone' }],
+  })
+
+  assert.equal(negative.summary.observedCorpus, 0)
+  assert.match(find(negative, 'completeness-unknown').message, /so 1 corpus record\(s\) were never observed/)
+  assert.equal(
+    /-\d+ corpus record/.test(find(negative, 'completeness-unknown').message),
+    false,
+    'a count of records never goes negative',
+  )
+})
+
+test('observedCorpus counts the declared identities a walk saw, and nothing else', async () => {
+  const report = await testScenarioObject({
+    corpus: ['a', 'b', 'c'],
+    pages: [{ cursor: null, records: ['a', 'x'], nextCursor: 'gone' }],
+  })
+
+  assert.equal(report.summary.observedCorpus, 1)
+  assert.equal(report.summary.distinctRecords, 2, 'the served count includes the identity the corpus never declared')
+  assert.match(find(report, 'completeness-unknown').message, /so 2 corpus record\(s\) were never observed/)
+})

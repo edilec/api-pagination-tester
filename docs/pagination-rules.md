@@ -212,6 +212,11 @@ run early, which is a finding of its own.
 
 `status` is `pass`, `fail` or `incomplete`. `summary.checked` counts pages walked.
 
+`summary.distinctRecords` counts the distinct identities the walk was *served*; `summary.observedCorpus`
+counts only those the corpus declares. The two differ exactly when the API serves something the corpus
+does not, and only the second one may be subtracted from the corpus size — which is what
+`completeness-unknown` reports as never observed, and what the CLI prints on stderr.
+
 `walk` carries what the run observed: the style, the declared page limit, how the walk ended
 (`terminatedBy`), whether completeness was proven (`complete`), one entry per page in walk order, the
 four record-identity lists, and the declared cursors nothing led to.

@@ -76,6 +76,19 @@ export function indexRecords(pages) {
 export function analyzeWalk({ scenario, result, findings }) {
   const { pagesById, repeatedInPage } = indexRecords(result.pages)
 
+  /**
+   * How many declared identities the walk actually saw.
+   *
+   * Counted against the corpus, not against the served ids: `pagesById` also
+   * holds identities the corpus never declared, so subtracting its size from
+   * the corpus length answers a question nobody asked. A walk that served one
+   * unknown id and no corpus id would report one corpus record unobserved when
+   * the true number is all of them, and a walk serving more unknown ids than
+   * the corpus declares would report a negative count -- a number no reader can
+   * act on and a claim about evidence that was never obtained.
+   */
+  const observedCorpus = scenario.corpus.filter((id) => pagesById.has(id)).length
+
   if (result.pages.length === 0) {
     findings.add(
       'no-pages-fetched',
@@ -343,7 +356,7 @@ export function analyzeWalk({ scenario, result, findings }) {
     findings.add(
       'completeness-unknown',
       `The walk ended on ${TERMINATION_TEXT[result.terminatedBy] ?? 'an unknown condition'} rather than on the ` +
-        `last page, so ${scenario.corpus.length - pagesById.size} corpus record(s) were never observed. Whether ` +
+        `last page, so ${scenario.corpus.length - observedCorpus} corpus record(s) were never observed. Whether ` +
         'they are missing or merely unreached is not known, and unknown is not a pass.',
       {
         section: SECTIONS.walk,
@@ -362,5 +375,6 @@ export function analyzeWalk({ scenario, result, findings }) {
     unknown,
     unreachablePages: unreachable,
     distinct: pagesById.size,
+    observedCorpus,
   }
 }

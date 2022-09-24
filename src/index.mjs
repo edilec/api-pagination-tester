@@ -127,6 +127,7 @@ const EMPTY_VERDICT = Object.freeze({
   unknown: [],
   unreachablePages: [],
   distinct: 0,
+  observedCorpus: 0,
 })
 
 const EMPTY_WALK = Object.freeze({
@@ -163,6 +164,7 @@ function buildReport({ findings, scenario, result, verdict, bytes }) {
       pages: result.pages.length,
       records: result.served,
       distinctRecords: verdict.distinct,
+      observedCorpus: verdict.observedCorpus,
       corpus: scenario === null ? 0 : scenario.corpus.length,
       duplicated: verdict.duplicated.length,
       repeatedInPage: verdict.repeatedInPage.length,

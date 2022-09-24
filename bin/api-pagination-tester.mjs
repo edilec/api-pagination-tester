@@ -223,9 +223,13 @@ async function main(argv) {
 
   if (writeFailed) return 2
   if (report.status === 'incomplete') {
-    const { checked, corpus, distinctRecords } = report.summary
+    // `observedCorpus`, not `distinctRecords`: the walk may have served ids the
+    // corpus never declared, and counting those as known records observed
+    // overstates the evidence in the one line that exists to say how little of
+    // it there is.
+    const { checked, corpus, observedCorpus } = report.summary
     process.stderr.write(
-      `incomplete: ${checked} page(s) were walked and ${distinctRecords} of ${corpus} known record(s) were ` +
+      `incomplete: ${checked} page(s) were walked and ${observedCorpus} of ${corpus} known record(s) were ` +
         'observed. The findings say what was not examined. Unknown is not a pass.\n',
     )
     return 2
@@ -235,7 +239,7 @@ async function main(argv) {
     return 1
   }
   process.stderr.write(
-    `ok: ${report.summary.pages} page(s) walked, ${report.summary.distinctRecords} of ${report.summary.corpus} ` +
+    `ok: ${report.summary.pages} page(s) walked, ${report.summary.observedCorpus} of ${report.summary.corpus} ` +
       'known record(s) observed exactly once.\n',
   )
   return 0
