@@ -257,11 +257,25 @@ export function analyzeWalk({ scenario, result, findings }) {
 
   const requestedCursors = new Set(result.requested)
   if (result.probedEmptyCursor) requestedCursors.add('')
-  const unreachable = scenario.pages
-    .filter((page) => page.cursor !== null && !requestedCursors.has(page.cursor))
-    .map((page) => page.cursor)
-    // Ordering site: declared cursors the walk never requested.
-    .sort(byCodeUnit)
+  /**
+   * Unreachability is the dual of *missing*, and it needs the same evidence.
+   *
+   * "The walk never requested this cursor" means "nothing leads a client to it"
+   * only when the walk followed the chain to the end. A walk that stopped on a
+   * loop, a dangling cursor or a bound never requested the rest of the chain
+   * either, and calling those pages unreachable contradicts the run's own
+   * page-limit finding one line above -- the report would say a page is
+   * unreachable while the page before it hands out exactly that cursor. An
+   * unfinished walk leaves the list empty; `completeness-unknown` is already
+   * the finding that says what was not examined.
+   */
+  const unreachable = !result.complete
+    ? []
+    : scenario.pages
+        .filter((page) => page.cursor !== null && !requestedCursors.has(page.cursor))
+        .map((page) => page.cursor)
+        // Ordering site: declared cursors the walk never requested.
+        .sort(byCodeUnit)
   const unreachableIndex = new Map(scenario.pages.map((page) => [page.cursor, page.index]))
   for (const cursor of unreachable) {
     findings.add(

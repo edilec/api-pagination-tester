@@ -219,6 +219,54 @@ test('a declared page the walk never requested is reported unreachable', async (
   assert.equal(report.status, 'pass')
 })
 
+test('a walk stopped by a bound calls nothing unreachable, because it never got there', async () => {
+  // The walk is cut off after one page. Page 0 hands out the cursor for page 1,
+  // which hands out the cursor for page 2, so "nothing the API returns leads a
+  // client to it" is false of both -- the walk simply stopped. Unreachability
+  // is the dual of missing and needs the same complete walk behind it.
+  const chain = {
+    corpus: ['a', 'b', 'c'],
+    pages: [
+      { cursor: null, records: ['a'], nextCursor: 'p2' },
+      { cursor: 'p2', records: ['b'], nextCursor: 'p3' },
+      { cursor: 'p3', records: ['c'], nextCursor: null },
+    ],
+  }
+
+  const cut = await testScenarioObject(chain, { limits: { maxPages: 1 } })
+  assert.equal(cut.status, 'incomplete')
+  assert.equal(cut.walk.complete, false)
+  assert.deepEqual(cut.walk.unreachablePages, [], 'a bound is not evidence about what leads where')
+  assert.equal(cut.summary.unreachablePages, 0)
+  assert.equal(ruleIds(cut).includes('page-unreachable'), false)
+  assert.equal(ruleIds(cut).includes('completeness-unknown'), true, 'what was not examined is still named')
+
+  // The same chain walked to the end really does reach every page, so the
+  // assertion above is not passing for want of anything to report.
+  const whole = await testScenarioObject(chain)
+  assert.equal(whole.status, 'pass')
+  assert.equal(whole.summary.pages, 3)
+})
+
+test('a cycle that strands a declared page does not make it unreachable either', async () => {
+  // The cycle example: the walk loops between page 0 and page 1 and never
+  // reaches the page keyed "page:3". Nothing observed says whether anything
+  // leads there, so nothing is claimed.
+  const report = await testScenarioObject({
+    corpus: ['a', 'b', 'c'],
+    pages: [
+      { cursor: null, records: ['a'], nextCursor: 'p2' },
+      { cursor: 'p2', records: ['b'], nextCursor: 'p2' },
+      { cursor: 'p3', records: ['c'], nextCursor: null },
+    ],
+  })
+
+  assert.equal(report.status, 'incomplete')
+  assert.equal(report.walk.terminatedBy, 'repeated-cursor')
+  assert.deepEqual(report.walk.unreachablePages, [])
+  assert.equal(ruleIds(report).includes('page-unreachable'), false)
+})
+
 test('a page probed for the empty-string cursor is not called unreachable', async () => {
   const report = await testScenarioObject({
     corpus: ['a', 'b'],

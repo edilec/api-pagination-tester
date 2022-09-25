@@ -161,7 +161,7 @@ is `incomplete`, and the exit code is 2.
 | `terminal-page-empty` | info | The last page carries no records. A legitimate ending, reported so it is never confused with an empty page in the middle. |
 | `page-over-limit` | error | A page carries more records than the declared `pageLimit`. |
 | `page-short-before-last` | warning | A non-terminal, non-empty page carries fewer records than the declared `pageLimit`. A client that stops on a short page would end the walk here. |
-| `page-unreachable` | warning | The scenario declares a page that the walk never requested, so nothing the API returns leads a client to it. |
+| `page-unreachable` | warning | A **complete** walk never requested a cursor the scenario declares a page for, so nothing the API returns leads a client to it. A walk that stopped early never requested the rest of the chain either, so it claims nothing here. |
 
 ### The records
 

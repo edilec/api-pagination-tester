@@ -33,7 +33,7 @@ Node 22 or newer. **No runtime dependencies and no development dependencies** â€
 | **Empty pages vs last pages** | Zero records with a next cursor is an empty page; no next cursor is the end. A client that conflates them truncates the collection or refetches forever. |
 | **Ambiguous terminators** | `nextCursor: ""`, which `if (next)` reads as the end and `if (next !== null)` reads as another page. |
 | **Page-size drift** | A page over the size the API declares, or short before the last page. |
-| **Unreachable pages** | A page the mock declares that nothing the API returns ever leads to. |
+| **Unreachable pages** | A page the mock declares that nothing the API returns ever leads to, on a **complete** walk. A walk that stopped early never requested the rest of the chain either, so it claims nothing here. |
 | **Unknown records** | An identity served that the corpus does not declare. |
 
 ## The scenario

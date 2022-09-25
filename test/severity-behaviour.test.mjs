@@ -281,11 +281,14 @@ test('the page bound is an error, and the run is incomplete at exit 2', async ()
   assert.equal(report.status, 'incomplete')
   assert.equal(code, 2)
   assert.equal(report.summary.errors, 2)
-  assert.equal(report.summary.warnings, 2)
+  // The two pages this walk never reached are not called unreachable: page 0
+  // hands out the cursor for page 1, so a walk cut short by a bound is no
+  // evidence that nothing leads there.
+  assert.equal(report.summary.warnings, 0)
   assert.equal(report.summary.info, 0)
+  assert.equal(text.includes('page-unreachable'), false)
   assert.equal(line(text, 'page-limit-exceeded').startsWith('ERROR'), true)
   assert.equal(line(text, 'completeness-unknown').startsWith('ERROR'), true)
-  assert.equal(line(text, 'page-unreachable').startsWith('WARNING'), true)
 })
 
 test('the record bound is an error, and the run is incomplete at exit 2', async () => {
