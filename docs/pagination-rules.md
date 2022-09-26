@@ -157,7 +157,7 @@ is `incomplete`, and the exit code is 2.
 
 | Rule | Severity | Meaning |
 | --- | --- | --- |
-| `empty-page-not-last` | warning | A page with no records that still hands out a next cursor. The message names how many records a client that stopped here would miss. |
+| `empty-page-not-last` | warning | A page with no records that still hands out a next cursor. The message names how many records *this walk observed* after it, which is what a client that stopped here would miss; a walk cut short by a bound never read the rest, so it counts only what it saw. |
 | `terminal-page-empty` | info | The last page carries no records. A legitimate ending, reported so it is never confused with an empty page in the middle. |
 | `page-over-limit` | error | A page carries more records than the declared `pageLimit`. |
 | `page-short-before-last` | warning | A non-terminal, non-empty page carries fewer records than the declared `pageLimit`. A client that stops on a short page would end the walk here. |

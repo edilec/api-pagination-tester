@@ -127,8 +127,36 @@ test('an empty page in the middle of a collection is reported, with what a clien
   assert.equal(report.status, 'pass', 'an empty page is a warning: the walk itself was correct and complete')
   assert.equal(report.walk.pages[1].empty, true)
   assert.equal(report.walk.pages[1].terminal, false)
-  assert.match(find(report, 'empty-page-not-last').message, /miss 1 record\(s\)/)
-  assert.equal(find(report, 'empty-page-not-last').evidence, 'next cursor p3; 1 record(s) follow')
+  assert.match(find(report, 'empty-page-not-last').message, /miss the 1 record\(s\) this walk observed after it/)
+  assert.equal(
+    find(report, 'empty-page-not-last').evidence,
+    'next cursor p3; 1 record(s) observed after it in this walk',
+  )
+})
+
+test('the records a truncating client would miss are counted as observed, not asserted', async () => {
+  // The same empty page, walked twice. Bounded at that page, the two records
+  // that follow it in the scenario were never fetched, so "would ... miss 0
+  // record(s)" would be a flat claim about pages nobody read. The count is
+  // scoped to what this walk saw, in the message and in the evidence alike.
+  const document = {
+    corpus: ['a', 'b'],
+    pages: [
+      { cursor: null, records: [], nextCursor: 'p2' },
+      { cursor: 'p2', records: ['a', 'b'], nextCursor: null },
+    ],
+  }
+
+  const cut = await testScenarioObject(document, { limits: { maxPages: 1 } })
+  const cutFinding = find(cut, 'empty-page-not-last')
+  assert.equal(cut.walk.complete, false)
+  assert.match(cutFinding.message, /miss the 0 record\(s\) this walk observed after it/)
+  assert.equal(cutFinding.evidence, 'next cursor p2; 0 record(s) observed after it in this walk')
+  assert.equal(/miss 0 record\(s\)\./.test(cutFinding.message), false, 'an unbounded claim about unread pages')
+
+  const whole = await testScenarioObject(document)
+  assert.equal(whole.walk.complete, true)
+  assert.match(find(whole, 'empty-page-not-last').message, /miss the 2 record\(s\) this walk observed after it/)
 })
 
 test('an empty last page is reported as an ending, not as an empty page', async () => {

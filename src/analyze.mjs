@@ -191,6 +191,15 @@ export function analyzeWalk({ scenario, result, findings }) {
 
   // --- page shape ------------------------------------------------------------
 
+  /**
+   * How many records this walk observed after each page.
+   *
+   * Observed, and said so in every message that uses it: on a walk cut short by
+   * a bound the pages after this one were never fetched, so the true number is
+   * unknown and the count of a scenario's remaining declarations would be a
+   * claim about pages nobody read. "Miss 0 record(s)" on a walk bounded at the
+   * empty page itself is the shape of that lie.
+   */
   const recordsAfter = []
   let running = 0
   for (let index = result.pages.length - 1; index >= 0; index -= 1) {
@@ -204,13 +213,15 @@ export function analyzeWalk({ scenario, result, findings }) {
       findings.add(
         'empty-page-not-last',
         `Page ${page.index} carries no records and still hands out a next cursor, so it is an empty page and not ` +
-          `the last page. A client that stops when a page comes back empty would end the walk here and miss ` +
-          `${recordsAfter[page.index]} record(s).`,
+          `the last page. A client that stops when a page comes back empty would end the walk here and miss the ` +
+          `${recordsAfter[page.index]} record(s) this walk observed after it.`,
         {
           section: SECTIONS.pages,
           page: page.index,
           pointer: `${at}/records`,
-          evidence: `next cursor ${cursorLabel(page.nextCursor)}; ${recordsAfter[page.index]} record(s) follow`,
+          evidence:
+            `next cursor ${cursorLabel(page.nextCursor)}; ` +
+            `${recordsAfter[page.index]} record(s) observed after it in this walk`,
           suggestion: 'Keep following the cursor until it is null. Emptiness is not a terminator.',
         },
       )
@@ -246,7 +257,7 @@ export function analyzeWalk({ scenario, result, findings }) {
           section: SECTIONS.pages,
           page: page.index,
           pointer: `${at}/records`,
-          evidence: `${recordsAfter[page.index]} record(s) follow`,
+          evidence: `${recordsAfter[page.index]} record(s) observed after it in this walk`,
           suggestion: 'A short page is not a terminator either; only a null next cursor is.',
         },
       )
