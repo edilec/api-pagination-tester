@@ -37,6 +37,7 @@ const CLASSES = [
   ['C1 CSI', 0x9b],
   ['line separator', 0x2028],
   ['paragraph separator', 0x2029],
+  ['arabic letter mark', 0x061c],
   ['left-to-right mark', 0x200e],
   ['right-to-left override', 0x202e],
   ['first strong isolate', 0x2068],

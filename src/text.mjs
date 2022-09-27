@@ -47,14 +47,19 @@ export function byCodeUnit(left, right) {
  *   U+009B is the 8-bit CSI, so it opens a control sequence with no ESC in
  *   sight.
  * - `0x2028`/`0x2029` -- the line and paragraph separators.
- * - `0x200E`, `0x200F`, `0x202A-0x202E`, `0x2066-0x2069` -- the bidirectional
- *   controls. U+202E RIGHT-TO-LEFT OVERRIDE reverses everything displayed after
- *   it, so a record id can be made to read as a different id entirely while the
- *   bytes say otherwise.
+ * - `0x061C`, `0x200E`, `0x200F`, `0x202A-0x202E`, `0x2066-0x2069` -- all twelve
+ *   characters Unicode gives the `Bidi_Control` property. U+202E RIGHT-TO-LEFT
+ *   OVERRIDE reverses everything displayed after it, so a record id can be made
+ *   to read as a different id entirely while the bytes say otherwise. U+061C
+ *   ARABIC LETTER MARK is the quiet one of the twelve -- it only sets the
+ *   direction of the neutral characters beside it -- but the claim made here,
+ *   in the README and in `docs/pagination-rules.md` is the whole class, so the
+ *   whole class is stripped.
  */
 export const FORGEABLE_RANGES = Object.freeze([
   Object.freeze([0x0000, 0x001f]),
   Object.freeze([0x007f, 0x009f]),
+  Object.freeze([0x061c, 0x061c]),
   Object.freeze([0x2028, 0x2029]),
   Object.freeze([0x200e, 0x200f]),
   Object.freeze([0x202a, 0x202e]),

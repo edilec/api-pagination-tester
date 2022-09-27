@@ -26,6 +26,7 @@ test('sanitize replaces every forgeable class with a space', () => {
   assert.equal(sanitize(`a${ch(0x9b)}b`), 'a b', 'C1 CSI')
   assert.equal(sanitize(`a${ch(0x2028)}b`), 'a b', 'line separator')
   assert.equal(sanitize(`a${ch(0x2029)}b`), 'a b', 'paragraph separator')
+  assert.equal(sanitize(`a${ch(0x061c)}b`), 'a b', 'arabic letter mark')
   assert.equal(sanitize(`a${ch(0x200e)}b`), 'a b', 'left-to-right mark')
   assert.equal(sanitize(`a${ch(0x200f)}b`), 'a b', 'right-to-left mark')
   assert.equal(sanitize(`a${ch(0x202e)}b`), 'a b', 'right-to-left override')
@@ -36,7 +37,7 @@ test('sanitize replaces every forgeable class with a space', () => {
 test('sanitize leaves ordinary text, including the neighbour of every range, alone', () => {
   // The character immediately outside each range must survive, or the guard is
   // stripping content rather than controls. Both sides of every bound.
-  for (const code of [0x20, 0x7e, 0xa0, 0x2027, 0x202f, 0x200d, 0x2010, 0x2065, 0x206a]) {
+  for (const code of [0x20, 0x7e, 0xa0, 0x061b, 0x061d, 0x2027, 0x202f, 0x200d, 0x2010, 0x2065, 0x206a]) {
     assert.equal(sanitize(`a${ch(code)}b`), `a${ch(code)}b`, `the code point ${code} must survive sanitising`)
   }
   assert.equal(sanitize('ord-1'), 'ord-1')
@@ -46,10 +47,25 @@ test('sanitize leaves ordinary text, including the neighbour of every range, alo
   assert.equal(isForgeable(0x7e), false)
   assert.equal(isForgeable(0x9f), true)
   assert.equal(isForgeable(0xa0), false)
+  assert.equal(isForgeable(0x061b), false)
+  assert.equal(isForgeable(0x061c), true)
+  assert.equal(isForgeable(0x061d), false)
   assert.equal(isForgeable(0x2027), false)
   assert.equal(isForgeable(0x202f), false)
   assert.equal(isForgeable(0x2065), false)
   assert.equal(isForgeable(0x206a), false)
+})
+
+test('every Unicode Bidi_Control character is stripped, which is what the docs claim', () => {
+  // The claim in `src/text.mjs`, in README.md and in docs/pagination-rules.md is
+  // the bidirectional controls as a class, so the class is enumerated here
+  // rather than sampled. U+061C is the one a sampled list forgets.
+  const bidiControls = [0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069]
+  assert.equal(bidiControls.length, 12, 'Unicode gives twelve characters the Bidi_Control property')
+  for (const code of bidiControls) {
+    assert.equal(isForgeable(code), true, `U+${code.toString(16).toUpperCase()} must be stripped`)
+    assert.equal(sanitize(`a${ch(code)}b`), 'a b')
+  }
 })
 
 test('excerpt collapses whitespace, trims and bounds by code point', () => {

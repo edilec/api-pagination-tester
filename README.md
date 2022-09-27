@@ -150,7 +150,7 @@ stopped — with no verdict attached, which is what makes the state machine test
 - It is deterministic. No `localeCompare`, no `Intl.Collator`, no `Date.now`, no `Math.random`; the
   clock is injected. Two runs over one scenario produce byte-identical stdout.
 - It never echoes a control character. Every untrusted string reaching output — record ids and
-  cursors included, not only excerpts — has C0, DEL, C1, U+2028/U+2029 and the bidi controls replaced
+  cursors included, not only excerpts — has C0, DEL, C1, U+2028/U+2029 and all twelve bidi controls replaced
   with a space. Sanitising happens on the way *out*; identity always uses the raw value, so the guard
   cannot manufacture a duplicate.
 

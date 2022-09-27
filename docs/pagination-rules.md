@@ -258,7 +258,7 @@ messages and evidence alike — has these code points replaced with a space:
 | DEL | `U+007F` |
 | C1 | `U+0080`–`U+009F` |
 | Line / paragraph separators | `U+2028`, `U+2029` |
-| Bidi controls | `U+200E`, `U+200F`, `U+202A`–`U+202E`, `U+2066`–`U+2069` |
+| Bidi controls (all twelve) | `U+061C`, `U+200E`, `U+200F`, `U+202A`–`U+202E`, `U+2066`–`U+2069` |
 
 Sanitising happens on the way *out*. Comparison and identity always use the raw value, so two ids
 that differ only in a stripped control character remain two different ids and a duplicate is not
