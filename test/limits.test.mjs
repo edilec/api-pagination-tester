@@ -112,16 +112,48 @@ test('maxIdLength: an identity at the bound is read, one character more is refus
 })
 
 test('maxIdLength applies to cursors as well as to record identities', async () => {
-  const document = {
-    corpus: ['a', 'b'],
-    pages: [
-      { cursor: null, records: ['a'], nextCursor: 'longcursor' },
-      { cursor: 'longcursor', records: ['b'], nextCursor: null },
-    ],
-  }
-  const past = await testScenarioObject(document, { limits: { maxIdLength: 4 } })
-  assert.deepEqual(ruleIds(past), ['record-id-too-long'])
-  assert.equal(past.findings[0].location.pointer, '/pages/1/cursor')
+  // The cursor a page is keyed by.
+  const keyed = await testScenarioObject(
+    {
+      corpus: ['a', 'b'],
+      pages: [
+        { cursor: null, records: ['a'], nextCursor: null },
+        { cursor: 'longcursor', records: ['b'], nextCursor: null },
+      ],
+    },
+    { limits: { maxIdLength: 4 } },
+  )
+  assert.deepEqual(ruleIds(keyed), ['record-id-too-long'])
+  assert.equal(keyed.findings[0].location.pointer, '/pages/1/cursor')
+})
+
+test('maxIdLength applies to a nextCursor too, including one no page answers', async () => {
+  // A nextCursor nothing answers is checked nowhere else: it never becomes a
+  // page key, so a bound that only covered `cursor` enforced a narrower rule
+  // than the documented "a record id or cursor". The dangling case is exactly
+  // where an unbounded identity arrives.
+  const dangling = await testScenarioObject(
+    { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: 'z'.repeat(64) }] },
+    { limits: { maxIdLength: 8 } },
+  )
+  assert.deepEqual(ruleIds(dangling), ['record-id-too-long'])
+  assert.equal(dangling.findings[0].location.pointer, '/pages/0/nextCursor')
+  assert.equal(dangling.status, 'incomplete')
+  assert.equal(dangling.summary.checked, 0, 'an identity that could not be compared walks nothing')
+
+  const atBound = await testScenarioObject(
+    { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: 'zzzzzzzz' }] },
+    { limits: { maxIdLength: 8 } },
+  )
+  assert.equal(ruleIds(atBound).includes('record-id-too-long'), false, 'exactly the bound is not refused')
+
+  // The empty-string terminator is not an identity, so the bound does not
+  // refuse it however small the bound is.
+  const ambiguous = await testScenarioObject(
+    { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: '' }] },
+    { limits: { maxIdLength: 1 } },
+  )
+  assert.deepEqual(ruleIds(ambiguous), ['terminator-ambiguous'])
 })
 
 test('maxFindings: a run at the bound reports everything, one finding more is capped and says so', async () => {

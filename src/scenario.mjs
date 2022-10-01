@@ -251,6 +251,15 @@ export function validateScenario(document, limits) {
     if (page.nextCursor !== null && typeof page.nextCursor !== 'string') {
       refuse('A nextCursor must be a string, or null on the last page.', { pointer: `${at}/nextCursor` })
     }
+    // The length bound covers every cursor, not only the ones a page is keyed
+    // by. A nextCursor no page answers is never checked anywhere else, so
+    // leaving it out enforced a narrower rule than the one documented -- and
+    // the dangling case is exactly where an unbounded identity arrives. The
+    // empty string is exempt here as it is for `cursor`: it is the ambiguous
+    // terminator this tool reports, not an identity.
+    if (typeof page.nextCursor === 'string' && page.nextCursor !== '') {
+      checkId(page.nextCursor, `${at}/nextCursor`, limits, 'A page nextCursor')
+    }
 
     if (!Array.isArray(page.records)) {
       refuse('Each page must declare a records array; an empty array is a legitimate empty page.', {
