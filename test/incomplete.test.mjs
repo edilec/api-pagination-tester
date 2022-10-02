@@ -108,26 +108,68 @@ test('a capped findings list is incomplete, not merely failed', async () => {
 })
 
 test('a pass is never reachable with nothing checked', async () => {
-  // The vacuous-pass guard. Every route to `checked: 0` is enumerated here and
-  // none of them is green.
+  /*
+   * The vacuous-pass guard. Every route to `checked: 0` is enumerated here: the
+   * scenario-level refusals, which walk nothing at all, and the two bounds that
+   * can be spent before the first page is attributed (`maxPages` cannot -- its
+   * floor of 1 always lets one page through).
+   *
+   * Every route must produce a report. An earlier revision listed
+   * `{ maxCorpus: 0 }` here, which is a configuration error rather than a
+   * scenario refusal: `validateLimits` rejected it, a `.catch(() => null)`
+   * swallowed the rejection and the loop skipped all three assertions, so one
+   * of the four enumerated routes asserted nothing at all. Nothing is caught
+   * now -- a route that throws fails this test loudly.
+   */
   const routes = [
-    [{ corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }], typo: 1 }, {}],
-    [{ style: 'keyset', corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }] }, {}],
     [
+      'an unknown scenario key',
+      { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }], typo: 1 },
+      {},
+    ],
+    [
+      'a style this tool does not implement',
+      { style: 'keyset', corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }] },
+      {},
+    ],
+    [
+      'a corpus past maxCorpus',
+      { corpus: ['a', 'b'], pages: [{ cursor: null, records: ['a'], nextCursor: null }] },
+      { limits: { maxCorpus: 1 } },
+    ],
+    [
+      'a scenario past maxScenarioPages',
+      {
+        corpus: ['a'],
+        pages: [
+          { cursor: null, records: ['a'], nextCursor: 'p2' },
+          { cursor: 'p2', records: [], nextCursor: null },
+        ],
+      },
+      { limits: { maxScenarioPages: 1 } },
+    ],
+    [
+      'an identity past maxIdLength',
+      { corpus: ['abc'], pages: [{ cursor: null, records: ['abc'], nextCursor: null }] },
+      { limits: { maxIdLength: 2 } },
+    ],
+    [
+      'a time budget spent before the first fetch',
       { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }] },
       { limits: { maxMillis: 0 }, clock: () => 0 },
     ],
     [
-      { corpus: ['a'], pages: [{ cursor: null, records: ['a'], nextCursor: null }] },
-      { limits: { maxCorpus: 0 } },
+      'a first page that would pass maxRecords',
+      { corpus: ['a', 'b'], pages: [{ cursor: null, records: ['a', 'b'], nextCursor: null }] },
+      { limits: { maxRecords: 1 } },
     ],
   ]
-  for (const [document, options] of routes) {
-    const report = await testScenarioObject(document, options).catch(() => null)
-    if (report === null) continue // a configuration error never had a subject
-    assert.equal(report.summary.checked, 0)
-    assert.notEqual(report.status, 'pass', 'a run that checked nothing must never be green')
-    assert.equal(report.summary.errors > 0, true, 'and it must say why')
+
+  for (const [route, document, options] of routes) {
+    const report = await testScenarioObject(document, options)
+    assert.equal(report.summary.checked, 0, `${route} must reach checked: 0, or it is not this route`)
+    assert.notEqual(report.status, 'pass', `${route}: a run that checked nothing must never be green`)
+    assert.equal(report.summary.errors > 0, true, `${route}: and it must say why`)
   }
 })
 

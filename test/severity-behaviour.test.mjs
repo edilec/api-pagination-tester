@@ -497,7 +497,13 @@ test('a scenario that cannot be read is an error, and the run is incomplete at e
     assert.equal(report.summary.errors, 1)
     assert.equal(report.summary.warnings, 0)
     assert.equal(report.summary.info, 0)
-    assert.equal(report.location, undefined)
+    // A report has no top-level `location`, so asserting one is undefined
+    // cannot fail whatever the tool does. The property worth pinning on this
+    // path is that the finding names the file and not the host path it was
+    // resolved from -- this refusal happens before the path resolves at all,
+    // which is the one case `--root` cannot make relative for it.
+    assert.equal(report.findings[0].location.file, 'absent.json')
+    assert.equal(report.findings[0].location.file.includes(base), false, 'no host path reaches the report')
     assert.equal(line(human.stdout, 'scenario-unreadable').startsWith('ERROR'), true)
   } finally {
     await rm(base, { recursive: true, force: true })
