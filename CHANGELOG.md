@@ -20,7 +20,9 @@ breaking change and is recorded here.
   explicitly, exactly one initial page, no duplicate cursors, and a non-empty corpus of unique
   identities.
 - The record-identity verdict: boundary duplicates, repeats inside one page, records the corpus does
-  not declare, and — only for a walk that reached a real last page — records that are missing.
+  not declare, and — only for a walk that reached a real last page — records that are missing and
+  declared pages nothing leads to. Both of those are inferences from having seen the whole chain, so
+  a walk stopped by a loop, a dangling cursor or a bound claims neither.
 - `completeness-unknown`: a walk that ended on a cycle, a dangling cursor or a bound proves nothing
   about completeness, so it says so and the run is incomplete rather than declaring unreached records
   missing.
@@ -40,8 +42,9 @@ breaking change and is recorded here.
 - Path confinement on real paths: both the root and the input are resolved before they are compared,
   so a symlink out of the root is refused and a root that is itself a symlink is not.
 - Strict UTF-8 decoding of every scenario, through one function shared by every entry point.
-- Output sanitising of C0, DEL, C1, U+2028/U+2029 and the bidi controls from every untrusted string,
-  identifiers included. Sanitising is an output step; identity always uses the raw value.
+- Output sanitising of C0, DEL, C1, U+2028/U+2029 and all twelve Unicode `Bidi_Control` characters
+  (U+061C included) from every untrusted string, identifiers included. Sanitising is an output step;
+  identity always uses the raw value.
 - Determinism: ordering by UTF-16 code unit at every site, an injected clock, and byte-identical
   stdout over identical input.
 - Three example scenarios, one for each exit code, and `docs/pagination-rules.md`.
