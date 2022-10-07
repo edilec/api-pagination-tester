@@ -222,10 +222,15 @@ does not, and only the second one may be subtracted from the corpus size — whi
 four record-identity lists, and the declared cursors nothing led to.
 
 `maxFindings` bounds the `findings` array and nothing else. The identity lists under `walk.records`
-and `walk.unreachablePages` are complete, and are bounded instead by `maxCorpus` and `maxRecords`,
-which are enforced before the walk starts. So a run whose findings were capped still reports every
-duplicated, repeated, missing and unknown identity it observed — the two are deliberately asymmetric,
-and `too-many-findings` says which of the two stopped early.
+and `walk.unreachablePages` are never truncated by it; they are bounded instead by `maxCorpus` and
+`maxScenarioPages`, enforced before the walk starts, and by `maxRecords`, enforced during it. So a run
+whose findings were capped still reports every duplicated, repeated, missing and unknown identity it
+observed — the two are deliberately asymmetric, and `too-many-findings` says which of the two stopped
+early.
+
+Two of those lists are inferences rather than observations, and both need a walk that reached a last
+page: `walk.records.missing` and `walk.unreachablePages` are empty on an unfinished walk, where
+`completeness-unknown` is the finding that says what was not examined.
 
 A finding carries `ruleId`, `severity`, `message`, `location.file`, `location.pointer`, and
 optionally `evidence`, `suggestion` and `page`. `location.file` is relative to `--root` (by default
