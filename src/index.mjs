@@ -29,7 +29,7 @@ import { basename, dirname, relative, resolve, sep } from 'node:path'
 import { analyzeWalk } from './analyze.mjs'
 import { FindingSet, SECTIONS, createFinding, sortFindings } from './rules.mjs'
 import { ScenarioError, createMockApi, validateScenario } from './scenario.mjs'
-import { cursorLabel, decodeUtf8, excerpt } from './text.mjs'
+import { cursorLabel, decodeUtf8, excerpt, parseFailureDetail } from './text.mjs'
 import { walkPages } from './walk.mjs'
 
 export const TOOL_ID = 'api-pagination-tester'
@@ -301,7 +301,7 @@ export async function testScenarioBytes(bytes, options = {}) {
     document = JSON.parse(text)
   } catch (error) {
     return refusedReport(
-      new ScenarioError('scenario-invalid', `The scenario is not valid JSON: ${excerpt(error.message, 160)}`, {
+      new ScenarioError('scenario-invalid', `The scenario is not valid JSON: ${excerpt(parseFailureDetail(error), 160)}`, {
         suggestion: 'Check the scenario against docs/pagination-rules.md.',
       }),
       fileLabel,
@@ -478,6 +478,7 @@ export {
   decodeUtf8,
   excerpt,
   isForgeable,
+  parseFailureDetail,
   sanitize,
 } from './text.mjs'
 export { TERMINATIONS, walkPages } from './walk.mjs'

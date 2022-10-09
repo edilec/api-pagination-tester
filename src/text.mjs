@@ -117,3 +117,35 @@ export function cursorLabel(cursor) {
 export function decodeUtf8(bytes) {
   return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes)
 }
+
+/**
+ * The part of a `JSON.parse` failure that may safely be shown.
+ *
+ * V8 reports a parse failure two ways, and one of them quotes the input:
+ * `Unexpected token 'A', "AKIAIOSFODNN7EXAMPLE" is not valid JSON`. A scenario
+ * short enough to be only a credential is reproduced in full by its own error
+ * message, and a longer one is reproduced ten characters at a time -- the
+ * window appears as `"prefix"...`, `..."suffix"` or `..."middle"...` depending
+ * on where the offending byte sits. Neither `sanitize` nor `excerpt` helps:
+ * the quoted span is at the *front* of the message, so both leave it intact
+ * and cut the position off the end instead.
+ *
+ * The quoted form carries no position, so nothing diagnostic is lost by
+ * replacing it with the token alone. The other form is all position and no
+ * input, and is kept verbatim. The quoted window never leaves this function.
+ *
+ * The quoted form is matched first on purpose: a scenario whose own bytes read
+ * `at position 12` would otherwise be quoted back by the position branch.
+ */
+export function parseFailureDetail(error) {
+  const message = typeof error?.message === 'string' ? error.message : ''
+  const token = /^Unexpected token (.+?), (\.\.\.)?".*"(?:\.\.\.)? is not valid JSON$/s.exec(message)
+  if (token) {
+    const where = token[2] === undefined ? ' near the start of the document' : ' in the document'
+    return `unexpected token ${sanitize(token[1])}${where}`
+  }
+  const position = /at position \d+(?: \(line \d+ column \d+\))?/.exec(message)
+  if (position) return message.slice(0, position.index + position[0].length)
+  if (/^Unexpected end of JSON input$/.test(message)) return message
+  return 'the document could not be parsed as JSON'
+}

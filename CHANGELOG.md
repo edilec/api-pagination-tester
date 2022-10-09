@@ -9,6 +9,16 @@ breaking change and is recorded here.
 
 ## [Unreleased]
 
+### Fixed
+
+- A scenario that does not parse is no longer quoted back into the report. `JSON.parse` embeds the
+  input in one of its two error messages — `Unexpected token 'A', "AKIA..." is not valid JSON` —
+  so a scenario file short enough to be only a credential was reproduced in full by the
+  `scenario-invalid` finding, on stdout, in both output modes. `parseFailureDetail` in `src/text.mjs`
+  now removes the quoted window and keeps the position, line and column, which are the diagnostic
+  half and carry no input. Sanitising and excerpting did not catch this: the quoted span is at the
+  front of the message and both cut from the back.
+
 ### Added
 
 - The pagination walker (`src/walk.mjs`): follows cursors from the initial request, remembers every

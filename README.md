@@ -149,6 +149,12 @@ stopped — with no verdict attached, which is what makes the state machine test
   and refused if they are not UTF-8.
 - It is deterministic. No `localeCompare`, no `Intl.Collator`, no `Date.now`, no `Math.random`; the
   clock is injected. Two runs over one scenario produce byte-identical stdout.
+- It never quotes the scenario back. A scenario that does not parse is reported by position, line
+  and column only. `JSON.parse` answers a short file by embedding the whole of it in the error
+  message (`Unexpected token 'A', "AKIA..." is not valid JSON`) and a long one ten characters at a
+  time, so a file that is only a credential would otherwise be reproduced by its own failure. That
+  quoted window is removed before the message reaches a finding; sanitising alone does not remove it,
+  because the window sits at the front of the message and truncation cuts from the back.
 - It never echoes a control character. Every untrusted string reaching output — record ids and
   cursors included, not only excerpts — has C0, DEL, C1, U+2028/U+2029 and all twelve bidi controls replaced
   with a space. Sanitising happens on the way *out*; identity always uses the raw value, so the guard
