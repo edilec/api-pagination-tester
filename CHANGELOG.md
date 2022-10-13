@@ -11,6 +11,18 @@ breaking change and is recorded here.
 
 ### Fixed
 
+- `--out` accepted a destination that destroyed a file the tool was never asked to touch. The check
+  resolved the destination and compared the result with the scenario, which caught a symbolic link
+  pointing AT the scenario and a hard link to it, and missed the case that actually loses data: a
+  symbolic link pointing anywhere else. `realpath` resolved it, the resolved path was not the
+  scenario, and the write went through the link. Measured with `--overwrite` — the flag whose whole
+  purpose is to say "replace that file" — a 9-byte file outside the tree became a 1241-byte report
+  at exit 0. A link whose target did not exist yet needed no `--overwrite` at all: the report was
+  created outside the tree. A symlinked parent directory did the same thing one level up.
+  `assertWritableDestination` now refuses all three before the scenario is opened, and the hard-link
+  identity comparison lives inside the same guard. `test/destination.test.mjs` has one case per hole
+  and one per allowed shape.
+
 - A scenario that does not parse is no longer quoted back into the report. `JSON.parse` embeds the
   input in one of its two error messages — `Unexpected token 'A', "AKIA..." is not valid JSON` —
   so a scenario file short enough to be only a credential was reproduced in full by the
@@ -21,6 +33,11 @@ breaking change and is recorded here.
 
 ### Added
 
+- `--out-root`, declaring the tree `--out` may resolve inside. It defaults to the working
+  directory and has no meaning without `--out`; `--overwrite` without `--out` is now a usage error
+  too, rather than a flag with no effect.
+- `assertWritableDestination` and `DestinationError`, exported for a caller writing its own
+  destination logic.
 - The pagination walker (`src/walk.mjs`): follows cursors from the initial request, remembers every
   cursor it has requested, and always terminates. Empty pages, last pages and the empty-string
   terminator are three separate states, not one.

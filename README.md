@@ -139,9 +139,15 @@ stopped — with no verdict attached, which is what makes the state machine test
 
 **What it will not do.**
 
-- It never rewrites the scenario. `src/` imports no write API; `--out` goes elsewhere, refuses to be
-  the input (identity compared by inode, because a hard link is a second name for one file) and
-  refuses to replace an existing file without `--overwrite`.
+- It never rewrites the scenario, and never writes anywhere but the file you named. `src/` imports
+  no write API. `--out` is checked before the scenario is opened, and is refused when it is a
+  symbolic link (`realpath` *resolves* a link, and resolving is the dangerous act — so it is
+  refused on sight with `lstat`, whether or not its target exists yet), when a symlinked directory
+  lies on the way to it, when it resolves outside `--out-root` (default: the working directory),
+  when it is the scenario under any name (identity compared by inode, because a hard link is a
+  second name for one file and resolves to a real path of its own), and when it is a directory or
+  its directory does not exist. An existing regular file is refused as well without `--overwrite`,
+  which is a separate question from safety and is asked after the guard.
 - It never reports unknown as a pass. A walk that ended on anything but a real last page raises
   `completeness-unknown`, and no record is declared missing on the strength of a walk that never
   reached the end.
@@ -168,6 +174,7 @@ stopped — with no verdict attached, which is what makes the state machine test
                         resolves outside it (default: the scenario's own directory)
 --json                  Emit the machine-readable report on stdout
 --out FILE              Also write the JSON report to FILE
+--out-root DIR          Tree --out must resolve inside (default: the working directory)
 --overwrite             Allow --out to replace an existing file
 -h, --help              Show help
 

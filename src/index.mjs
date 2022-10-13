@@ -30,7 +30,10 @@ import { analyzeWalk } from './analyze.mjs'
 import { FindingSet, SECTIONS, createFinding, sortFindings } from './rules.mjs'
 import { ScenarioError, createMockApi, validateScenario } from './scenario.mjs'
 import { cursorLabel, decodeUtf8, excerpt, parseFailureDetail } from './text.mjs'
+
 import { walkPages } from './walk.mjs'
+
+export { DestinationError, assertWritableDestination } from './write-guard.mjs'
 
 export const TOOL_ID = 'api-pagination-tester'
 export const REPORT_SCHEMA_VERSION = '1'

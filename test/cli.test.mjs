@@ -190,7 +190,7 @@ test('--out writes the same JSON the --json flag prints', async () => {
     const out = join(base, 'report.json')
     await writeFile(target, JSON.stringify(CLEAN))
 
-    const written = await invoke(['--input', target, '--out', out])
+    const written = await invoke(['--input', target, '--out', out, '--out-root', base])
     assert.equal(written.code, 0)
     const printed = await invoke(['--input', target, '--json'])
     assert.equal(await readFile(out, 'utf8'), printed.stdout)
