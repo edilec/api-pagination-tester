@@ -55,7 +55,8 @@ one-character typo cannot quietly turn a real failure into a green run.
 
 --out is checked before the scenario is opened. A symbolic link at the
 destination, a symlinked directory on the way to it, a path that resolves
-outside --out-root and a hard link to the scenario are each refused: every one
+outside --out-root, a hard link to the scenario, and a destination reached by
+the scenario's dangling symlink chain are refused: every one
 of them writes the report over a file this tool was never asked to touch.
 
 Exit codes:

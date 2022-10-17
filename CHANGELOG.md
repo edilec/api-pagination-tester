@@ -11,6 +11,12 @@ breaking change and is recorded here.
 
 ### Fixed
 
+- A missing scenario linked to the named `--out` path, directly or through another
+  symlink, could be turned into the report file while the run exited 2 as
+  incomplete. The destination guard now resolves the scenario's final link
+  chain before writing; an ordinary missing scenario with a separate report
+  destination still produces an incomplete report.
+
 - `--out` accepted a destination that destroyed a file the tool was never asked to touch. The check
   resolved the destination and compared the result with the scenario, which caught a symbolic link
   pointing AT the scenario and a hard link to it, and missed the case that actually loses data: a

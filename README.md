@@ -145,7 +145,8 @@ stopped — with no verdict attached, which is what makes the state machine test
   refused on sight with `lstat`, whether or not its target exists yet), when a symlinked directory
   lies on the way to it, when it resolves outside `--out-root` (default: the working directory),
   when it is the scenario under any name (identity compared by inode, because a hard link is a
-  second name for one file and resolves to a real path of its own), and when it is a directory or
+  second name for one file and resolves to a real path of its own), when a dangling scenario
+  symlink chain names the would-be report path, and when it is a directory or
   its directory does not exist. An existing regular file is refused as well without `--overwrite`,
   which is a separate question from safety and is asked after the guard.
 - It never reports unknown as a pass. A walk that ended on anything but a real last page raises

@@ -19,7 +19,7 @@
  */
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
-import { link, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises'
+import { link, mkdir, mkdtemp, readFile, readlink, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import test from 'node:test'
@@ -194,6 +194,59 @@ test('a hard link to the scenario is refused, and the scenario survives', async 
     assert.equal(result.stdout, '')
     assert.match(reason(result.stderr), /same file as an input/)
     assert.equal(await readFile(input, 'utf8'), SCENARIO)
+  })
+})
+
+test('a distinct missing scenario can write its incomplete report to an ordinary destination', async () => {
+  await withBase(async ({ base, input, permitted }) => {
+    await unlink(input)
+    const destination = join(permitted, 'report.json')
+    const result = await invoke([
+      '--input', input, '--root', base, '--out', destination, '--out-root', permitted, '--json',
+    ])
+
+    assert.equal(result.code, 2)
+    assert.equal(JSON.parse(result.stdout).status, 'incomplete')
+    assert.equal(JSON.parse(result.stdout).findings[0].ruleId, 'scenario-unreadable')
+    assert.equal(await readFile(destination, 'utf8'), result.stdout)
+    assert.equal(await exists(input), false)
+  })
+})
+
+test('a dangling scenario symlink to the report path is refused before any report is written', async () => {
+  await withBase(async ({ base, input, permitted }) => {
+    await unlink(input)
+    const destination = join(permitted, 'report.json')
+    await symlink(destination, input)
+    const result = await invoke([
+      '--input', input, '--root', base, '--out', destination, '--out-root', permitted, '--json',
+    ])
+
+    assert.equal(await exists(destination), false, 'the destination must not create the missing input target')
+    assert.equal(await readlink(input), destination)
+    assert.equal(result.code, 2)
+    assert.equal(result.stdout, '', 'output validation happens before the scenario read')
+    assert.match(reason(result.stderr), /names an input path/)
+  })
+})
+
+test('two dangling scenario symlink hops to the report path are refused before writing', async () => {
+  await withBase(async ({ base, input, permitted }) => {
+    await unlink(input)
+    const middle = join(base, 'middle.json')
+    const destination = join(permitted, 'report.json')
+    await symlink('middle.json', input)
+    await symlink('permitted/report.json', middle)
+    const result = await invoke([
+      '--input', input, '--root', base, '--out', destination, '--out-root', permitted, '--json',
+    ])
+
+    assert.equal(await exists(destination), false)
+    assert.equal(await readlink(input), 'middle.json')
+    assert.equal(await readlink(middle), 'permitted/report.json')
+    assert.equal(result.code, 2)
+    assert.equal(result.stdout, '')
+    assert.match(reason(result.stderr), /names an input path/)
   })
 })
 

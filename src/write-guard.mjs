@@ -1,5 +1,5 @@
-import { lstat, realpath, stat } from 'node:fs/promises'
-import { dirname, resolve, sep } from 'node:path'
+import { lstat, readlink, realpath, stat } from 'node:fs/promises'
+import { basename, dirname, resolve, sep } from 'node:path'
 
 /** Raised when a destination cannot be written to safely. The caller exits 2. */
 export class DestinationError extends Error {
@@ -7,6 +7,30 @@ export class DestinationError extends Error {
     super(message)
     this.name = 'DestinationError'
   }
+}
+
+async function namedInputTarget(path, label) {
+  let current = resolve(path)
+  const seen = new Set()
+  for (let hop = 0; hop < 40; hop += 1) {
+    let parent
+    try {
+      parent = await realpath(dirname(current))
+    } catch (error) {
+      if (error.code === 'ENOENT') return current
+      throw new DestinationError(`${label} input path could not be inspected.`)
+    }
+    const named = resolve(parent, basename(current))
+    if (seen.has(named)) throw new DestinationError(`${label} input path has a symbolic-link cycle.`)
+    seen.add(named)
+    try {
+      current = resolve(parent, await readlink(named))
+    } catch (error) {
+      if (error.code === 'EINVAL' || error.code === 'ENOENT') return named
+      throw new DestinationError(`${label} input path could not be inspected.`)
+    }
+  }
+  throw new DestinationError(`${label} input path has too many symbolic links.`)
 }
 
 /**
@@ -76,22 +100,30 @@ export async function assertWritableDestination(destination, options = {}) {
     }
   }
 
-  if (existing === null) return target
-
   // Same file as an input? Compare identity, not paths.
-  for (const input of inputs) {
-    let source
-    try {
-      source = await stat(input)
-    } catch {
-      continue
+  if (existing !== null) {
+    for (const input of inputs) {
+      let source
+      try {
+        source = await stat(input)
+      } catch {
+        continue
+      }
+      if (source.dev === existing.dev && source.ino === existing.ino) {
+        throw new DestinationError(
+          `${label} is the same file as an input (they share device ${existing.dev} and ` +
+            `inode ${existing.ino}, so a hard link does not make them different files). ` +
+            'This tool never rewrites what it reads.',
+        )
+      }
     }
-    if (source.dev === existing.dev && source.ino === existing.ino) {
-      throw new DestinationError(
-        `${label} is the same file as an input (they share device ${existing.dev} and ` +
-          `inode ${existing.ino}, so a hard link does not make them different files). ` +
-          'This tool never rewrites what it reads.',
-      )
+  }
+
+  // A missing destination may still be the target of a dangling input symlink.
+  const namedDestination = resolve(parent, basename(target))
+  for (const input of inputs) {
+    if (await namedInputTarget(input, label) === namedDestination) {
+      throw new DestinationError(`${label} names an input path.`)
     }
   }
   return target
