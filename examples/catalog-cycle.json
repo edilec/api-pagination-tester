@@ -1,0 +1,11 @@
+{
+  "name": "catalog-cycle",
+  "style": "cursor",
+  "pageLimit": 2,
+  "corpus": ["sku-a", "sku-b", "sku-c", "sku-d"],
+  "pages": [
+    { "cursor": null, "records": ["sku-a", "sku-b"], "nextCursor": "page:2" },
+    { "cursor": "page:2", "records": ["sku-c"], "nextCursor": "page:2" },
+    { "cursor": "page:3", "records": ["sku-d"], "nextCursor": null }
+  ]
+}
