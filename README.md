@@ -178,6 +178,11 @@ stopped — with no verdict attached, which is what makes the state machine test
   with a space. Sanitising happens on the way *out*; identity always uses the raw value, so the guard
   cannot manufacture a duplicate.
 
+For live API design under concurrent writes, see Edilec's
+[cursor pagination engineering guide](https://edilec.com/blog/sofeng-11004/cursor-pagination-concurrent-writes-stable-ordering/).
+This CLI only checks a supplied in-memory scenario; it cannot verify that a
+service keeps the same ordering or cursor behavior in production.
+
 ## Options
 
 ```
