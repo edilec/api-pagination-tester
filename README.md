@@ -16,12 +16,23 @@ aggregate.
 
 ## Install and run
 
-```
-npx api-pagination-tester --input scenario.json
-npx api-pagination-tester --input scenario.json --json > report.json
+This package is not published to the npm registry. From a checkout of this
+repository, run the checked-in CLI against the public clean fixture or your own
+scenario:
+
+```sh
+node bin/api-pagination-tester.mjs --input examples/orders-clean.json
+node bin/api-pagination-tester.mjs --input scenario.json --json > report.json
 ```
 
 Node 22 or newer. **No runtime dependencies and no development dependencies** — Node built-ins only.
+
+From another project, npm can fetch the public GitHub source directly. The
+scenario path is relative to that project's working directory:
+
+```sh
+npm exec --yes --package=git+https://github.com/edilec/api-pagination-tester.git -- api-pagination-tester --input scenario.json
+```
 
 ## What it finds
 
